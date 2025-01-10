@@ -1,0 +1,21 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.espIdfPathWin": "C:\\Users\\willi\\esp\\v5.3.1\\esp-idf",
+    "idf.openOcdConfigs": [
+        "board/esp32c3-ftdi.cfg"
+    ],
+    "idf.portWin": "COM5",
+    "idf.toolsPathWin": "C:\\Users\\willi\\.espressif",
+    "files.associations": {
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "span": "c",
+        "inttypes.h": "c",
+        "esp_log.h": "c",
+        "esp_system.h": "c",
+        "i2c_master.h": "c",
+        "gpio.h": "c"
+    },
+    "idf.flashType": "UART"
+}

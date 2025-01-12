@@ -6,7 +6,7 @@
 #include <esp_log.h>
 #include "driver/i2c_master.h"
 
-#define POWER_METER_I2C_ADDR    0x36
+#define FUEL_GAUGE_I2C_ADDR    0x36
 #define FUEL_GAUGE_I2C_TIMEOUT  100 // ms
 
 // Data Registers

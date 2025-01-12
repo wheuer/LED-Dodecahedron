@@ -1,0 +1,19 @@
+dependencies:
+  espressif/led_strip:
+    dependencies:
+    - name: idf
+      version: '>=5.0'
+    source:
+      path: C:\Desktop\temp\idf-extra-components\led_strip
+      type: local
+    version: 3.0.0
+  idf:
+    source:
+      type: idf
+    version: 5.3.1
+direct_dependencies:
+- espressif/led_strip
+- idf
+manifest_hash: f2aec6ed378d8782e4ece99a63e8adc6db87b607dccd64409cf99de462787f0c
+target: esp32c3
+version: 2.0.0

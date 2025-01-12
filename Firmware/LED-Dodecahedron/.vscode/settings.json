@@ -15,7 +15,17 @@
         "esp_log.h": "c",
         "esp_system.h": "c",
         "i2c_master.h": "c",
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "fuel_gauge.h": "c",
+        "system_error": "c",
+        "power.h": "c",
+        "led_panels.h": "c",
+        "plasma_waves.h": "c",
+        "waterfall.h": "c",
+        "noise.h": "c",
+        "dna.h": "c",
+        "stdio.h": "c",
+        "temperature_sensor.h": "c"
     },
     "idf.flashType": "UART"
 }

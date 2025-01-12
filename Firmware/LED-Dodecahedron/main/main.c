@@ -9,8 +9,11 @@
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
 
+#include "Power/power.h"
 #include "Power/fuel_gauge.h"
+#include "Power/power_meter.h"
 #include "Temperature/temperature_sensor.h"
+#include "LED_Panels/led_panels.h"
 
 const static char* TAG = "[MAIN]";
 
@@ -33,14 +36,40 @@ void app_main(void)
     esp_err_t err = i2c_new_master_bus(&i2c_mst_config, &bus_handle);
     if (err != ESP_OK) ESP_LOGE(TAG, "I2C Bus Creation: %u\n", err);
 
+    systemPowerInit();
     fuelGaugeInit(bus_handle);
     tempSenseInit(bus_handle);
-    
+    powerMeterInit(bus_handle);
+    ledPanelsInit();
+
+    boostConverterEnable();
+  
+    // ESP_LOGI(TAG, "BC This should be 0: %u", getBoostConverterState());
+    // boostConverterDisable();
+    // ESP_LOGI(TAG, "BC This should be 0: %u", getBoostConverterState());
+    // boostConverterEnable();
+    // ESP_LOGI(TAG, "BC This should be 1: %u", getBoostConverterState());
+
+    // ESP_LOGI(TAG, "USBS This should be 1: %u", isUSBPlugged());
+
     while (1)
     {   
+        ESP_LOGI(TAG, "--------------------");
+
+        // Fuel Gauge
+        float cRate = readCRate();
+        ESP_LOGI(TAG, "Approx C-Rate: %.2f, ~%.2f mA", cRate, cRate * (2200.0/3600)); 
         ESP_LOGI(TAG, "Battery SOC: %.2f %%", readStateOfCharge());
         ESP_LOGI(TAG, "Raw Battery Voltage: %.2f mV", readRawBatteryVoltage());
+        
+        // Temp Sensor
         ESP_LOGI(TAG, "Temperature: %.2f C", readTemperature());
+
+        // Power Meter
+        ESP_LOGI(TAG, "Bus Voltage: %.2f mV", readBusVoltage());
+        ESP_LOGI(TAG, "Shunt Voltage: %.2f mV", readBatteryShuntVoltage());
+        ESP_LOGI(TAG, "Battery Current: %.2f mA", readBatteryCurrentDraw() * 1000);
+
         vTaskDelay(2500 / portTICK_PERIOD_MS);
     }
 

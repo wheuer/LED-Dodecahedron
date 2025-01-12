@@ -9,7 +9,7 @@ static i2c_master_dev_handle_t fuelDevHandle;
 
 static i2c_device_config_t fuelDevCfg = {
     .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-    .device_address = POWER_METER_I2C_ADDR,
+    .device_address = FUEL_GAUGE_I2C_ADDR,
     .scl_speed_hz = 100000,
 };
 
@@ -57,9 +57,27 @@ float readStateOfCharge(void)
     }
 }
 
+// Note that although the C-Rate should indicate a current draw value, the datasheet says it shouldn't be converted to amperes
+// Returned value is in percent/hour
+// Since the battery has a nominal capacity of 2200mAh the theoretical conversion to ampere (mA) would be 2200/3600  
 float readCRate(void)
 {
-    return -1;
+    uint8_t registerAddress = REGISTER_CRATE_ADDR;
+    uint8_t response[2];
+
+    // Read the battery charge
+    esp_err_t err = i2c_master_transmit_receive(fuelDevHandle, &registerAddress, 1, response, 2, FUEL_GAUGE_I2C_TIMEOUT);
+    if (err == ESP_OK) 
+    {
+        // Returned as two bytes with a 0.208%/hour LSB
+        //printf("SOC Got bytes: %x %x\n", response[0], response[1]);
+        return ((uint16_t) ((response[0] << 8) | response[1])) * 0.208;
+    }
+    else 
+    {
+        ESP_LOGE(TAG, "Read C-Rate FAIL");
+        return -1;
+    }
 }
 
 // Recommended to update at least every minute for optimal performance

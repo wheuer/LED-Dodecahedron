@@ -15,6 +15,7 @@ static i2c_device_config_t fuelDevCfg = {
 
 // Updated every 250 ms (as an average of 4 readings) in active mode and 45s in hibernation
 // Directly measures between VCELL and GND so it could be skewed by the system load
+// Returned in mV
 float readRawBatteryVoltage(void)
 {
     uint8_t registerAddress = REGISTER_VCELL_ADDR;

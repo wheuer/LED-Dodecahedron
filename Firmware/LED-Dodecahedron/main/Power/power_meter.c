@@ -49,7 +49,7 @@ float readBatteryShuntVoltage(void)
         // Returned as two bytes in twos complement format
         // The returned unit is in terms of the IC's ADC result which as configured has a resolution of 2.5uV
         int16_t convertedResponse = (response[0] << 8) | response[1];
-        // printf("SHUNT VOLTAGE Got bytes: %x %x\n", response[0], response[1]);
+        //printf("SHUNT VOLTAGE Got bytes: %x %x\n", response[0], response[1]);
         return convertedResponse * 0.0025; // mV
     }
     else 
@@ -70,7 +70,8 @@ float readBatteryCurrentDraw(void)
     if (err == ESP_OK) 
     {
         // Returned as two bytes in twos complement format
-        // The LSB is based on what we selected for the CURRENT_LSB in the calibration value calculation
+        // The LSB value is based on what we selected for the CURRENT_LSB in the calibration value calculation
+        //printf("CURRENT DRAW Got bytes: %x %x\n", response[0], response[1]);
         int16_t convertedResponse = (response[0] << 8) | response[1];
         return (float) (convertedResponse * POWER_METER_MINIMUM_CURRENT_LSB);
     }

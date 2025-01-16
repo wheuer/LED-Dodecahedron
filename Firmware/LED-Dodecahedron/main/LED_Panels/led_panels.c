@@ -20,13 +20,22 @@
 #include <effects/matrix.h>
 #include <effects/rain.h>
 #include <effects/fire.h>
+#include <effects/solid_color.h>
 
 static const char *TAG = "LEDS";
 
 static led_strip_handle_t activeStrip;
 static uint8_t currentBrightness = LED_DEFAULT_BRIGHTNESS;
-static ledEffect_t current_effect = EFFECT_NONE;
-static fb_draw_cb_t effect_done = NULL;
+static ledEffect_t currentEffect = EFFECT_NONE;
+static fb_draw_cb_t effectDone = NULL;
+
+// Temporarily have variable for all white and OFF
+static solidColorParam_t solidColorDefaultParam = {
+    .newColor = SOLID_COLOR_WHITE
+};
+
+static fb_animation_t animation; // Animation used by effects
+static framebuffer_t fb; // Framebuffer used by animation
 
 static led_strip_handle_t configureLeds(void)
 {
@@ -81,120 +90,139 @@ static esp_err_t render_frame(framebuffer_t *fb, void *arg)
     return led_strip_refresh(activeStrip);
 }
 
-static void switch_effect(fb_animation_t *animation)
+void changeBrightness(uint8_t newBrightness)
+{
+    if (newBrightness <= LED_MAX_BRIGHTNESS) currentBrightness = newBrightness;
+}
+
+uint8_t getCurrentBrightness(void)
+{
+    return currentBrightness;
+}
+
+ledEffect_t getCurrentEffect(void)
+{
+    return currentEffect;
+}
+
+void switch_effect(ledUpdate_t* newEffect)
 {
     // stop rendering
-    if (current_effect != EFFECT_NONE)
-        fb_animation_stop(animation);
+    if (currentEffect != EFFECT_NONE)
+        fb_animation_stop(&animation);
 
-    // finish current effect
-    if (effect_done)
-        effect_done(animation->fb);
+    // finish current effect (call the effects free function)
+    if (effectDone)
+        effectDone(animation.fb);
 
     // clear framebuffer
-    fb_clear(animation->fb);
+    fb_clear(animation.fb);
 
-    // pick new effect
-    if (++current_effect == EFFECT_MAX)
-        current_effect = EFFECT_NONE + 1;
+    // Set the new effect
+    if (newEffect->newEffect < EFFECT_MAX)
+       currentEffect = newEffect->newEffect;
 
-    // init new effect
-    fb_draw_cb_t effect_func = NULL;
-    switch(current_effect)
+    // Update the brightness
+    changeBrightness(newEffect->newBrightness);
+
+    // Init new effect
+    // The param is still in the form of a char array that must be decoded
+    fb_draw_cb_t effect_func = NULL; 
+    switch(currentEffect)
     {
+        case EFFECT_NONE:
+        case EFFECT_CHARGING:
+            // The frame buffer should be cleared but we need to update the LEDs
+            led_strip_clear(activeStrip);
+            led_strip_clear(activeStrip);
+            break;
+        case EFFECT_SOLID_COLOR:
+            // Ignore the param for now, just use solid white for testing
+            led_effect_solid_color_init(animation.fb, &solidColorDefaultParam);
+            effect_func = led_effect_solid_color_run;
+            effectDone = led_effect_solid_color_done;
+            break;
         case EFFECT_DNA:
-            led_effect_dna_init(animation->fb, random8_between(10, 100), random8_between(1, 10), random8_to(2));
+            led_effect_dna_init(animation.fb, random8_between(10, 100), random8_between(1, 10), random8_to(2));
             effect_func = led_effect_dna_run;
-            effect_done = led_effect_dna_done;
+            effectDone = led_effect_dna_done;
             break;
         case EFFECT_NOISE:
-            led_effect_noise_init(animation->fb, random8_between(10, 100), random8_between(1, 50));
+            led_effect_noise_init(animation.fb, random8_between(10, 100), random8_between(1, 50));
             effect_func = led_effect_noise_run;
-            effect_done = led_effect_noise_done;
+            effectDone = led_effect_noise_done;
             break;
         case EFFECT_WATERFALL_FIRE:
-            led_effect_waterfall_init(animation->fb, random8_between(2, 4), 0, random8_between(20, 120), random8_between(50, 200));
+            led_effect_waterfall_init(animation.fb, random8_between(2, 4), 0, random8_between(20, 120), random8_between(50, 200));
             effect_func = led_effect_waterfall_run;
-            effect_done = led_effect_waterfall_done;
+            effectDone = led_effect_waterfall_done;
             break;
         case EFFECT_WATERFALL:
-            led_effect_waterfall_init(animation->fb, random8_to(2), random8_between(1, 255), random8_between(20, 120), random8_between(50, 200));
+            led_effect_waterfall_init(animation.fb, random8_to(2), random8_between(1, 255), random8_between(20, 120), random8_between(50, 200));
             effect_func = led_effect_waterfall_run;
-            effect_done = led_effect_waterfall_done;
+            effectDone = led_effect_waterfall_done;
             break;
         case EFFECT_PLASMA_WAVES:
-            led_effect_plasma_waves_init(animation->fb, random8_between(50, 255));
+            led_effect_plasma_waves_init(animation.fb, random8_between(50, 255));
             effect_func = led_effect_plasma_waves_run;
-            effect_done = led_effect_plasma_waves_done;
+            effectDone = led_effect_plasma_waves_done;
             break;
         case EFFECT_RAINBOW:
-            led_effect_rainbow_init(animation->fb, random8_to(3), random8_between(10, 50), random8_between(1, 20));
+            led_effect_rainbow_init(animation.fb, random8_to(3), random8_between(10, 50), random8_between(1, 20));
             effect_func = led_effect_rainbow_run;
-            effect_done = led_effect_rainbow_done;
+            effectDone = led_effect_rainbow_done;
             break;
         case EFFECT_RAYS:
-            led_effect_rays_init(animation->fb, random8_between(0, 50), random8_between(3, 5), random8_between(5, 10));
+            led_effect_rays_init(animation.fb, random8_between(0, 50), random8_between(3, 5), random8_between(5, 10));
             effect_func = led_effect_rays_run;
-            effect_done = led_effect_rays_done;
+            effectDone = led_effect_rays_done;
             break;
         case EFFECT_CRAZYBEES:
-            led_effect_crazybees_init(animation->fb, random8_between(2, 5));
+            led_effect_crazybees_init(animation.fb, random8_between(2, 5));
             effect_func = led_effect_crazybees_run;
-            effect_done = led_effect_crazybees_done;
+            effectDone = led_effect_crazybees_done;
             break;
         case EFFECT_SPARKLES:
-            led_effect_sparkles_init(animation->fb, random8_between(1, 20), random8_between(10, 150));
+            led_effect_sparkles_init(animation.fb, random8_between(1, 20), random8_between(10, 150));
             effect_func = led_effect_sparkles_run;
-            effect_done = led_effect_sparkles_done;
+            effectDone = led_effect_sparkles_done;
             break;
         case EFFECT_MATRIX:
-            led_effect_matrix_init(animation->fb, random8_between(10, 250));
+            led_effect_matrix_init(animation.fb, random8_between(10, 250));
             effect_func = led_effect_matrix_run;
-            effect_done = led_effect_matrix_done;
+            effectDone = led_effect_matrix_done;
             break;
         case EFFECT_RAIN:
-            led_effect_rain_init(animation->fb, random8_to(2), random8(), random8_to(100), random8_between(100, 200));
+            led_effect_rain_init(animation.fb, random8_to(2), random8(), random8_to(100), random8_between(100, 200));
             effect_func = led_effect_rain_run;
-            effect_done = led_effect_rain_done;
+            effectDone = led_effect_rain_done;
             break;
         case EFFECT_FIRE:
-            led_effect_fire_init(animation->fb, random8_to(3));
+            led_effect_fire_init(animation.fb, random8_to(3));
             effect_func = led_effect_fire_run;
-            effect_done = led_effect_fire_done;
+            effectDone = led_effect_fire_done;
             break;
         default:
             break;
     }
 
-    // start rendering
-    fb_animation_play(animation, LED_FPS, effect_func, NULL);
+    // Start/Resume rendering
+    fb_animation_play(&animation, LED_FPS, effect_func, NULL);
 }
 
-void test(void *pvParameters)
-{
-    // Perform the Espressif led_strip setup
-    activeStrip = configureLeds();
-    ESP_LOGI(TAG, "LED strip initialized");
-
-    // Setup framebuffer for effects
-    framebuffer_t fb;
-    fb_init(&fb, LED_EQUIVALENT_WIDTH, LED_EQUIVALENT_HEIGHT, render_frame);
-
-    // Setup animation
-    fb_animation_t animation;
-    fb_animation_init(&animation, &fb);
-
-    while (1)
-    {
-        switch_effect(&animation);
-        ESP_LOGI(TAG, "Switching to effect: %d", current_effect);
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-    }
-}
-
+// After initilization we can simply call the switch_effect function
+// The update process is handeled by the led_strip driver relying on a esp timer
 esp_err_t ledPanelsInit(void)
 {
-    // Perform the Espressif led_strip setup
-    xTaskCreate(test, "LED test", 8192, NULL, 5, NULL);   
+    // Perform the hardware led_strip setup
+    activeStrip = configureLeds();
+
+    // Initialize framebuffer used for effects
+    fb_init(&fb, LED_EQUIVALENT_WIDTH, LED_EQUIVALENT_HEIGHT, render_frame);
+
+    // Initalize animation used for effects
+    fb_animation_init(&animation, &fb);
+ 
+    ESP_LOGI(TAG, "LED strip initialized");
     return ESP_OK;
 }

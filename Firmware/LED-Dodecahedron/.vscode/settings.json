@@ -25,7 +25,14 @@
         "noise.h": "c",
         "dna.h": "c",
         "stdio.h": "c",
-        "temperature_sensor.h": "c"
+        "temperature_sensor.h": "c",
+        "lib8tion.h": "c",
+        "esp_mac.h": "c",
+        "solid_color.h": "c",
+        "freertos.h": "c",
+        "fire.h": "c",
+        "compare": "c",
+        "cstdint": "c"
     },
     "idf.flashType": "UART"
 }

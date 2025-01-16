@@ -16,7 +16,4 @@ int getBoostConverterState(void);
 int isUSBPlugged(void);
 
 
-
-
-
 #endif // __POWER_H_

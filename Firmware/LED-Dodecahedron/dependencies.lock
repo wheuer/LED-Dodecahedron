@@ -1,19 +1,10 @@
 dependencies:
-  espressif/led_strip:
-    dependencies:
-    - name: idf
-      version: '>=5.0'
-    source:
-      path: C:\Desktop\Projects\LED-Dodecahedron\Firmware\LED-Dodecahedron\components\led_strip
-      type: local
-    version: 3.0.0
   idf:
     source:
       type: idf
     version: 5.3.1
 direct_dependencies:
-- espressif/led_strip
 - idf
-manifest_hash: ac224ba1d7e22a4a478bf53f032149c7f940116ca23dafb5dbc187e4febe2c25
+manifest_hash: 973fc5f6ec7fd832ad6ceec5f04bcb230682913434e745023c0893aeb34ce9d6
 target: esp32c3
 version: 2.0.0

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>LED Dodecahedron</title>
+    </head>
+    <style>
+        .row {
+            display: flex;
+            max-width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .column {
+            max-width: fit-content;
+            margin-left: 2em;
+            margin-right: 2em;
+            margin-top: auto;
+            margin-bottom: auto;
+            flex: 50%;
+            text-align: center;
+            font-size: large;
+        }
+
+        .device-info {
+            text-align: left;
+        }
+        
+        @media (max-width: 800px) {
+            .row {
+                flex-direction: column;
+            }
+        }
+
+    </style>
+    <body>
+        <div class="row">
+            <div class="column">
+                <p>Update the Current Theme:</p>
+                <form id="theme-form" action="/light-effect" method="POST">
+                    <!-- 
+                    The value of the effect must match the enum in effects.h
+                    NONE = 0
+                    CHARGING = 1
+                    WAIT_FOR_CHARGE = 2
+                    SOLID_COLOR = 3
+                    DNA = 4
+                    NOISE = 5  
+                    WATERFALL_FIRE = 6
+                    WATERFALL = 7
+                    PLASMA_WAVES = 8
+                    RAINBOW = 9
+                    RAYS = 10
+                    CRAZYBEES = 11
+                    SPARKLES = 12
+                    MATRIX = 13
+                    RAIN = 14
+                    FIRE = 15
+                    -->
+                    <input type="radio" id="off" name="theme" value="1" checked>
+                    <label for="off">NONE (off)</label><br>
+
+                    <input type="radio" id="SOLID_COLOR" name="theme" value="4">
+                    <label for="SOLID_COLOR">Solid White</label><br>
+
+                    <input type="radio" id="DNA" name="theme" value="5">
+                    <label for="DNA">DNA</label><br>
+
+                    <input type="radio" id="NOISE" name="theme" value="6">
+                    <label for="NOISE">Noise</label><br>
+
+                    <input type="radio" id="WATERFALL_FIRE" name="theme" value="7">
+                    <label for="WATERFALL_FIRE">Waterfall Fire</label><br>
+
+                    <input type="radio" id="WATERFALL" name="theme" value="8">
+                    <label for="WATERFALL">Waterfall</label><br>
+
+                    <input type="radio" id="PLASMA_WAVES" name="theme" value="9">
+                    <label for="PLASMA_WAVES">Plasma Waves</label><br>
+
+                    <input type="radio" id="RAINBOW" name="theme" value="10">
+                    <label for="RAINBOW">Rainbow</label><br>
+
+                    <input type="radio" id="RAYS" name="theme" value="11">
+                    <label for="RAYS">Rays</label><br>
+
+                    <input type="radio" id="CRAZYBEES" name="theme" value="12">
+                    <label for="CRAZYBEES">Crazy Bees</label><br>
+
+                    <input type="radio" id="SPARKLES" name="theme" value="13">
+                    <label for="SPARKLES">Sparkles</label><br>
+
+                    <input type="radio" id="MATRIX" name="theme" value="14">
+                    <label for="MATRIX">Matrix</label><br>
+
+                    <input type="radio" id="RAIN" name="theme" value="15">
+                    <label for="RAIN">Rain</label><br>
+
+                    <input type="radio" id="FIRE" name="theme" value="16">
+                    <label for="FIRE">Fire</label><br>
+    
+                    <br>
+    
+                    <input type="range" id="bright" name="brightness" value="5" min="0" max="8">
+                    <p style="margin: 0;">Brightness: <span id="currentBright"></span></p>
+                    <br> 
+    
+                    <button type="submit">Update</button>
+                </form> 
+            </div>
+            <div class="column device-info">
+                <p>Connection Status: <span id="connection-status">Not Connected</span></p>
+                <p>Current Effect: <span id="current-effect">Unknown</span></p>
+                <p>Current Brightness: <span id="current-brightness">Unknown</span></p>
+                <p>Charging State: <span id="charge-state">Unknown</span></p>
+                <p>Board Temperature: <span id="board-temp">Unknown</span></p>
+                <p>Battery Voltage: <span id="battery-voltage">Unknown</span></p>
+                <p>Battery Charge: <span id="battery-charge">Unknown</span></p>
+                <p>Battery Current Draw: <span id="battery-current">Unknown</span></p>
+            </div>
+        </div>
+
+        <script defer>
+            // Create lookup table for effects and update status flag
+            const effectLookup = ["INVALID", "None", "Charging", "Waiting for Charge", "Solid Color", "DNA", 
+                                    "Noise", "Waterfall Fire", "Waterfall", "Plasma Waves", "Rainbow",
+                                    "Rays", "Crazy Bees", "Sparkles", "Matrix", "Rain", "Fire"];
+            var updateStatusFlag = false;
+
+            // Setup the interactive brightness slider
+            var brightSlider = document.getElementById("bright");
+            var output = document.getElementById("currentBright");
+            output.innerHTML = brightSlider.value;
+
+            brightSlider.oninput = function() {
+                output.innerHTML = this.value;
+            }
+
+            // Grab the dynamic information HTML elements
+            var connectionStatus = document.getElementById("connection-status");
+            var currentEffect = document.getElementById("current-effect");
+            var currentBrightness = document.getElementById("current-brightness");
+            var chargeState = document.getElementById("charge-state");
+            var boardTemp = document.getElementById("board-temp");
+            var batteryVoltage = document.getElementById("battery-voltage");
+            var batteryCharge = document.getElementById("battery-charge");
+            var batteryCurrent = document.getElementById("battery-current");
+           
+            // Send a GET request for device information every 2500 ms and when the form is submitted
+            async function getHardwareUpdate() {
+                try {
+                    const response = await fetch('/check-in');
+                    if (!response.ok) throw new Error(`Hardware Update Error, Response Status: ${response.status}`);
+                    const data = await response.text();
+                    //const data = "effect=2&bv=4.20&bl=20&cs=1&bt=23.50&bc=99.99&bcu=10000"; // Test data
+                    connectionStatus.innerHTML = "Connected";
+
+                    const dataPairs = data.split('&');
+                    var effectNumber;
+                    for (let i = 0; i < dataPairs.length; i++) {
+                        var pair = dataPairs[i].split('=');
+                        switch (pair[0]) {
+                            case 'effect':
+                                // Use lookup table to change effect, ignoring invalid (=0)
+                                effectNumber = Number(pair[1]);
+                                if (effectNumber < effectLookup.length && effectNumber != 0) currentEffect.innerHTML = effectLookup[effectNumber];
+                                break;
+                            case 'bl': // Brightness level
+                                currentBrightness.innerHTML = String(pair[1]);
+                                if (!updateStatusFlag) // Don't want to override slider after initial update in case the user is using it
+                                {   
+                                    output.innerHTML = pair[1];
+                                    brightSlider.value = pair[1];
+                                }
+                                break;
+                            case 'bv': // Battery voltage
+                                batteryVoltage.innerHTML = String(pair[1]) + " V";
+                                break;
+                            case 'cs': // Charging status
+                                if (pair[1] == 1)
+                                {
+                                    chargeState.innerHTML = "Charging";
+                                }
+                                else
+                                {
+                                    chargeState.innerHTML = "Not Charging";
+                                }
+                                break;
+                            case 'bt': // Board temperature
+                                boardTemp.innerHTML = String(pair[1]) + " °C";
+                                break;
+                            case 'bc': // Battery charge
+                                batteryCharge.innerHTML = String(pair[1]) + " %";
+                                break;
+                            case 'bcu': // Battery current
+                                batteryCurrent.innerHTML = String(pair[1]) + " mA";
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    updateStatusFlag = true;
+
+                } catch (error) {
+                    connectionStatus.innerHTML = "Disconnected";
+                    currentEffect.innerHTML = "Unknown";
+                    currentBrightness.innerHTML = "Unknown";
+                    batteryVoltage.innerHTML = "Unknown";
+                    chargeState.innerHTML = "Unknown";
+                    boardTemp.innerHTML = "Unknown";
+                    batteryCharge.innerHTML = "Unknown";
+                    batteryCurrent.innerHTML = "Unknown";
+                    console.log(error.message);
+                }
+            }
+
+            form = document.getElementById("theme-form");
+            // form.addEventListener("submit", getHardwareUpdate); // Always update right after a user input
+            getHardwareUpdate();
+            setInterval(getHardwareUpdate, 2500);
+
+        </script>
+
+    </body>
+</html>

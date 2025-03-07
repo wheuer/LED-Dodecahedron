@@ -130,7 +130,7 @@ esp_err_t appPOSTHandler(httpd_req_t* request)
     // Need to respond. Currently always just send user back to index.
     httpd_resp_send(request, (char*)app_index_html_start, app_index_html_end - app_index_html_start);
 
-    ESP_LOGI(TAG, "POST REQUEST ON %s", request->uri);
+    //ESP_LOGI(TAG, "POST REQUEST ON %s", request->uri);
     return ESP_OK;
 }
 

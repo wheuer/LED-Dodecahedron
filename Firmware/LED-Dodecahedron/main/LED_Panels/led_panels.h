@@ -38,12 +38,12 @@ typedef struct {
 } ledUpdate_t;
 
 #define LED_STRIP_GPIO_PIN          3
-#define LED_PANEL_PER_PANEL_COUNT   36
-#define LED_PANEL_COUNT             12
+#define LED_PER_PANEL_COUNT         36
+#define LED_PANEL_COUNT             2 //12
 
 // For now we will treat all the LEDs as one massive panel
 // In future it would be worth doing 12 different panels?
-#define LED_EQUIVALENT_HEIGHT   LED_PANEL_PER_PANEL_COUNT
+#define LED_EQUIVALENT_HEIGHT   LED_PER_PANEL_COUNT
 #define LED_EQUIVALENT_WIDTH    LED_PANEL_COUNT
 
 #define LED_MAX_BRIGHTNESS      8 // It likes to crash at higher values, not sure why, the hardware should be able to handle it, could be the step current draw

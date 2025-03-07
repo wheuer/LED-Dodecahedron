@@ -42,7 +42,7 @@ static led_strip_handle_t configureLeds(void)
     // LED strip general initialization, according to your led board design
     led_strip_config_t strip_config = {
         .strip_gpio_num = LED_STRIP_GPIO_PIN, // The GPIO that connected to the LED strip's data line
-        .max_leds = LED_PANEL_PER_PANEL_COUNT * LED_PANEL_COUNT,      // The number of LEDs in the strip,
+        .max_leds = LED_PER_PANEL_COUNT * LED_PANEL_COUNT,      // The number of LEDs in the strip,
         .led_model = LED_MODEL_WS2812,        // LED strip model
         // set the color order of the strip: GRB
         .color_component_format = {
@@ -107,6 +107,8 @@ ledEffect_t getCurrentEffect(void)
 
 void switch_effect(ledUpdate_t* newEffect)
 {
+    esp_err_t err = ESP_OK;
+
     // stop rendering
     if (currentEffect != EFFECT_NONE)
         fb_animation_stop(&animation);
@@ -130,12 +132,6 @@ void switch_effect(ledUpdate_t* newEffect)
     fb_draw_cb_t effect_func = NULL; 
     switch(currentEffect)
     {
-        case EFFECT_NONE:
-        case EFFECT_CHARGING:
-            // The frame buffer should be cleared but we need to update the LEDs
-            led_strip_clear(activeStrip);
-            led_strip_clear(activeStrip);
-            break;
         case EFFECT_SOLID_COLOR:
             // Ignore the param for now, just use solid white for testing
             led_effect_solid_color_init(animation.fb, &solidColorDefaultParam);
@@ -203,11 +199,21 @@ void switch_effect(ledUpdate_t* newEffect)
             effectDone = led_effect_fire_done;
             break;
         default:
+            // If a proper effect is not selected or it is EFFECT_CHARGING or EFFECT_NONE we will clear the LEDs but not start the animation again
+            // The frame buffer should be cleared and we need to update the LEDs manually as the animation is stopped
+            effectDone = NULL;
+            effect_func = NULL;
+            // For some reason clearing sometimes only clears most of the panels, it could be a signal integrity issue, run twice to make sure we clear
+            led_strip_clear(activeStrip);
+            led_strip_clear(activeStrip);
             break;
     }
 
     // Start/Resume rendering
-    fb_animation_play(&animation, LED_FPS, effect_func, NULL);
+    if (effect_func != NULL)
+    {
+        fb_animation_play(&animation, LED_FPS, effect_func, NULL);
+    }   
 }
 
 // After initilization we can simply call the switch_effect function

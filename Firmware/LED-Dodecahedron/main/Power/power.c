@@ -37,7 +37,8 @@ int getBoostConverterState(void)
 
 int isUSBPlugged(void)
 {
-    return gpio_get_level(USB_DETECT_GPIO);
+    return 0;
+    //return gpio_get_level(USB_DETECT_GPIO);
 }
 
 static void usbDetectHandler(void* arg)

@@ -39,7 +39,7 @@ typedef struct {
 
 #define LED_STRIP_GPIO_PIN          3
 #define LED_PER_PANEL_COUNT         36
-#define LED_PANEL_COUNT             2 //12
+#define LED_PANEL_COUNT             12
 
 // For now we will treat all the LEDs as one massive panel
 // In future it would be worth doing 12 different panels?
@@ -50,7 +50,7 @@ typedef struct {
 #define LED_DEFAULT_BRIGHTNESS  5
 #define LED_DEFAULT_EFFECT      EFFECT_DNA
 
-#define LED_FPS 60
+#define LED_FPS 30
 
 esp_err_t ledPanelsInit(void);
 void switch_effect(ledUpdate_t* newEffect);

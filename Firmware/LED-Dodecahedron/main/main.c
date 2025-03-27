@@ -27,7 +27,7 @@
 #define BATTERY_MINIMUM_PERCENTAGE_RISING   40
 #define BATTERY_CURRENT_DRAW_MAXIMUM        4 // A little under 2C discharge
 
-#define LED_DEFAULT_EFFECT EFFECT_DNA
+#define LED_DEFAULT_EFFECT EFFECT_NOISE
 
 typedef enum {
     NORMAL_OPERATION = 0,
@@ -58,7 +58,7 @@ static void monitorTask(void* param)
     // Turn on the LEDs and start a default effect
     ledUpdate_t incomingEffect;
     incomingEffect.newBrightness = LED_DEFAULT_BRIGHTNESS;
-    incomingEffect.newEffect = EFFECT_SOLID_COLOR;
+    incomingEffect.newEffect = LED_DEFAULT_EFFECT;
     boostConverterEnable();
     switch_effect(&incomingEffect);
 
